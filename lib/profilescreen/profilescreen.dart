@@ -328,7 +328,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text("Subscription Status", style: TextStyle(color: Colors.white70, fontSize: 14)),
-                SizedBox(height: 4),
+                SizedBox(height: 5),
                 Text("Active", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
               ],
             ),
