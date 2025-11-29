@@ -52,7 +52,7 @@ class _MainBottomBarState extends State<MainBottomBar> {
           BottomNavigationBarItem(
             icon: Icon(Icons.video_collection_outlined),
             label: "video",
-            backgroundColor: Colors.blue,
+            backgroundColor: Colors.white,
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person),
