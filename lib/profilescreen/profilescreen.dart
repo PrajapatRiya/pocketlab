@@ -207,7 +207,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           // LOGOUT BUTTON
           IconButton(
             onPressed: _showLogoutDialog,
-            icon: const Icon(Icons.logout, color: Color(0xFF0D47A1), size: 28),
+            icon: const Icon(Icons.logout, color: Colors.white, size: 28),
             tooltip: "Logout",
           ),
         ],
@@ -236,9 +236,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: Colors.blue.shade900,
-                  border: Border.all(color: Colors.white, width: 3),
                 ),
-                child: const Icon(Icons.camera_alt, color: Colors.white, size: 22),
+                child: const Icon(Icons.camera_alt, color: Colors.white, size: 15),
               ),
             ),
           ),

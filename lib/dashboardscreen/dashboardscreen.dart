@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:pocketlab/NotificationScreen/Noticationscreen.dart';
 
 class DashboardBlueScreen extends StatefulWidget {
   const DashboardBlueScreen({super.key});
@@ -89,10 +90,15 @@ class _DashboardBlueScreenState extends State<DashboardBlueScreen> {
               ),
               Row(
                 children: [
-                  CircleAvatar(
-                    radius: screenWidth * 0.055,
-                    backgroundColor: Colors.white.withOpacity(0.1),
-                    child: const Icon(Icons.notifications, color: Colors.white),
+                  InkWell(
+                    onTap: (){
+                      Navigator.push(context, MaterialPageRoute(builder: (context)=>NotificationScreen()));
+                    },
+                    child: CircleAvatar(
+                      radius: screenWidth * 0.055,
+                      backgroundColor: Colors.white.withOpacity(0.1),
+                      child: const Icon(Icons.notifications, color: Colors.white),
+                    ),
                   ),
                   SizedBox(width: screenWidth * 0.03),
                   CircleAvatar(

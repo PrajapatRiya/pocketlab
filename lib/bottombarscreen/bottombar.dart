@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pocketlab/videoplayerscreen/videoplayerscreen.dart';
 
 import '../Browserscreen/Browserscreen.dart';
 import '../dashboardscreen/dashboardscreen.dart';
@@ -18,7 +19,7 @@ class _MainBottomBarState extends State<MainBottomBar> {
   final List<Widget> screens = [
     const DashboardBlueScreen(),
     const MyCourseScreen(),
-    const Browserscreen(),
+    const VideoPlayerScreen(),
     const ProfileScreen(),
   ];
 
@@ -49,9 +50,9 @@ class _MainBottomBarState extends State<MainBottomBar> {
             backgroundColor: Colors.white,
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.explore),
-            label: "Browse",
-            backgroundColor: Colors.white,
+            icon: Icon(Icons.video_collection_outlined),
+            label: "video",
+            backgroundColor: Colors.blue,
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person),
