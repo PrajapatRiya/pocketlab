@@ -1,9 +1,5 @@
-// ignore_for_file: avoid_print
-
 import 'package:flutter/material.dart';
-import 'package:flutter_stripe/flutter_stripe.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class SubscriptionScreen extends StatefulWidget {
   const SubscriptionScreen({super.key});
@@ -16,298 +12,212 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
   final TextEditingController nameController = TextEditingController();
 
   @override
-  void initState() {
-    super.initState();
-
-    // Stripe Initialization
-    Stripe.publishableKey = "pk_test_51XXXXXX"; // <-- YOUR STRIPE PUBLISHABLE KEY
-    Stripe.merchantIdentifier = 'merchant.flutter.stripe.test';
-    Stripe.instance.applySettings();
-  }
-
-  // ---------------- STRIPE PAYMENT ----------------
-  Future<void> startPayment(String name, String plan, int amount) async {
-    try {
-      // ---- 1. Create PaymentIntent on Backend ----
-      final paymentIntent = await createPaymentIntent(amount.toString(), "INR");
-
-      if (paymentIntent == null) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text("Payment failed")));
-        return;
-      }
-
-      // ---- 2. Initialize Payment Sheet ----
-      await Stripe.instance.initPaymentSheet(
-        paymentSheetParameters: SetupPaymentSheetParameters(
-          paymentIntentClientSecret: paymentIntent['client_secret'],
-          merchantDisplayName: name,
-        ),
-      );
-
-      // ---- 3. Display Payment Sheet ----
-      await Stripe.instance.presentPaymentSheet();
-
-      // ---- 4. Success ----
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("$plan Purchased Successfully!")),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text("Payment Failed: $e")));
-    }
-  }
-
-  // ---------------- CREATE PAYMENT INTENT ----------------
-  Future<Map<String, dynamic>?> createPaymentIntent(
-      String amount, String currency) async {
-    try {
-      // Convert Rs → Paise
-      final int amountInPaise = int.parse(amount) * 100;
-
-      // ⚠️ You MUST replace URL with your backend API
-      var url = Uri.parse("https://your-backend.com/create-payment-intent");
-
-      var response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          "amount": amountInPaise,
-          "currency": currency,
-        }),
-      );
-
-      return jsonDecode(response.body);
-    } catch (e) {
-      print("Error creating payment intent: $e");
-      return null;
-    }
-  }
-
-  // ---------------- UI START ----------------
-  @override
   Widget build(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
-    final screenWidth = MediaQuery.of(context).size.width;
-
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
-      body: SafeArea(
-        child: Column(
-          children: [
-            headerUI(screenHeight, screenWidth),
-            SizedBox(height: screenHeight * 0.02),
-            nameFieldUI(screenWidth, screenHeight),
-            SizedBox(height: screenHeight * 0.02),
-
-            Expanded(
-              child: ListView(
-                padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.05),
-                children: [
-                  buildPlanCard(
-                    screenHeight,
-                    screenWidth,
-                    title: "Basic Plan",
-                    price: "₹199 / month",
-                    duration: "30 Days",
-                    amount: 199,
-                    color: Colors.blue.shade50,
-                    borderColor: Colors.blue,
-                    benefits: [
-                      "Access to basic courses",
-                      "PDF study materials",
-                      "Basic certificate",
-                    ],
-                  ),
-                  SizedBox(height: 16),
-
-                  buildPlanCard(
-                    screenHeight,
-                    screenWidth,
-                    title: "Standard Plan",
-                    price: "₹399 / month",
-                    duration: "30 Days",
-                    amount: 399,
-                    color: Colors.green.shade50,
-                    borderColor: Colors.green,
-                    benefits: [
-                      "All basic features",
-                      "Live doubt classes",
-                      "Completion certificate",
-                      "Offline video downloads",
-                    ],
-                  ),
-                  SizedBox(height: 16),
-
-                  buildPlanCard(
-                    screenHeight,
-                    screenWidth,
-                    title: "Premium Plan",
-                    price: "₹699 / month",
-                    duration: "30 Days",
-                    amount: 699,
-                    color: Colors.amber.shade50,
-                    borderColor: Colors.amber,
-                    benefits: [
-                      "All standard features",
-                      "1-on-1 mentorship",
-                      "Premium certificate",
-                      "Priority support",
-                      "Private community group",
-                    ],
-                  ),
-                  SizedBox(height: 20),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ---------------- HEADER ----------------
-  Widget headerUI(double h, double w) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.symmetric(vertical: h * 0.03),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF4A00E0), Color(0xFF8E2DE2)],
-        ),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
+      backgroundColor: theme.scaffoldBackgroundColor,
+      body: Stack(
         children: [
-          Text("Subscription Plans",
-              style: TextStyle(
-                  color: Colors.white,
-                  fontSize: w * 0.07,
-                  fontWeight: FontWeight.bold)),
-          Text("Upgrade your learning experience",
-              style: TextStyle(color: Colors.white70, fontSize: w * 0.045)),
+          // Background Glow Effects (Same as Dashboard)
+          Positioned(
+            top: -100,
+            right: -100,
+            child: _buildBlurCircle(theme.colorScheme.primary.withOpacity(0.12), 250),
+          ),
+          Positioned(
+            bottom: 100,
+            left: -50,
+            child: _buildBlurCircle(theme.colorScheme.secondary.withOpacity(0.08), 200),
+          ),
+          
+          SafeArea(
+            child: Column(
+              children: [
+                _buildAppBar(context),
+                Expanded(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    padding: EdgeInsets.symmetric(horizontal: 24.w),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(height: 20.h),
+                        Text(
+                          "Upgrade to Premium",
+                          style: TextStyle(color: Colors.white, fontSize: 26.sp, fontWeight: FontWeight.w900, letterSpacing: -0.5),
+                        ),
+                        SizedBox(height: 10.h),
+                        Text(
+                          "Choose the plan that fits your learning goals and unlock all professional features.",
+                          style: TextStyle(color: Colors.white54, fontSize: 14.sp, height: 1.5, fontWeight: FontWeight.w500),
+                        ),
+                        SizedBox(height: 35.h),
+                        
+                        _buildPlanCard(
+                          title: "Basic Plan",
+                          price: "₹199",
+                          period: "/ month",
+                          color: theme.colorScheme.surface,
+                          accentColor: Colors.blueAccent,
+                          benefits: ["Access to basic courses", "PDF study materials", "Basic certificate"],
+                        ),
+                        SizedBox(height: 20.h),
+                        
+                        _buildPlanCard(
+                          title: "Standard Plan",
+                          price: "₹399",
+                          period: "/ month",
+                          isPopular: true,
+                          color: theme.colorScheme.surface,
+                          accentColor: theme.colorScheme.primary,
+                          benefits: ["All basic features", "Live doubt classes", "Completion certificate", "Offline downloads"],
+                        ),
+                        SizedBox(height: 20.h),
+                        
+                        _buildPlanCard(
+                          title: "Premium Plan",
+                          price: "₹699",
+                          period: "/ month",
+                          color: theme.colorScheme.surface,
+                          accentColor: Colors.amber,
+                          benefits: ["All standard features", "1-on-1 mentorship", "Premium certificate", "Priority support"],
+                        ),
+                        SizedBox(height: 30.h),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 
-  // ---------------- NAME FIELD ----------------
-  Widget nameFieldUI(double w, double h) {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: w * 0.05),
-      child: TextField(
-        controller: nameController,
-        decoration: InputDecoration(
-          hintText: "Enter your name",
-          filled: true,
-          fillColor: Colors.white,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
+  Widget _buildBlurCircle(Color color, double size) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(shape: BoxShape.circle, color: color),
+      child: Container(
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          boxShadow: [BoxShadow(color: color, blurRadius: 100, spreadRadius: 50)],
         ),
       ),
     );
   }
 
-  // ---------------- PLAN CARD ----------------
-  Widget buildPlanCard(
-      double h,
-      double w, {
-        required String title,
-        required String price,
-        required String duration,
-        required int amount,
-        required Color color,
-        required Color borderColor,
-        required List<String> benefits,
-      }) {
+  Widget _buildAppBar(BuildContext context) {
     return Container(
-      padding: EdgeInsets.all(w * 0.05),
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: Container(
+              padding: EdgeInsets.all(10.w),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(12.r),
+              ),
+              child: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 18),
+            ),
+          ),
+          Text(
+            "Subscription Plans",
+            style: TextStyle(
+              fontSize: 20.sp,
+              color: Colors.white,
+              fontWeight: FontWeight.w900,
+              letterSpacing: -0.5,
+            ),
+          ),
+          const SizedBox(width: 40),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPlanCard({
+    required String title,
+    required String price,
+    required String period,
+    required Color color,
+    required Color accentColor,
+    required List<String> benefits,
+    bool isPopular = false,
+  }) {
+    return Container(
+      padding: EdgeInsets.all(24.w),
       decoration: BoxDecoration(
         color: color,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: borderColor, width: 2),
+        borderRadius: BorderRadius.circular(28.r),
+        border: Border.all(color: isPopular ? accentColor.withOpacity(0.5) : Colors.white.withOpacity(0.05), width: isPopular ? 2 : 1),
+        boxShadow: isPopular ? [
+          BoxShadow(color: accentColor.withOpacity(0.2), blurRadius: 20, offset: const Offset(0, 10))
+        ] : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title,
-              style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: w * 0.055,
-                  color: Colors.black)),
-
-          SizedBox(height: 6),
-
-          Text(price,
-              style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: w * 0.045,
-                  color: Colors.black87)),
-
-          SizedBox(height: 8),
-
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Icon(Icons.access_time, color: Colors.deepPurple),
-              SizedBox(width: 10),
-              Text("Duration: $duration",
-                  style: TextStyle(
-                      fontSize: w * 0.04, fontWeight: FontWeight.w500)),
+              Text(title, style: TextStyle(color: Colors.white, fontSize: 18.sp, fontWeight: FontWeight.w900)),
+              if (isPopular)
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                  decoration: BoxDecoration(color: accentColor, borderRadius: BorderRadius.circular(10.r)),
+                  child: Text("POPULAR", style: TextStyle(color: Colors.white, fontSize: 10.sp, fontWeight: FontWeight.w900, letterSpacing: 1)),
+                ),
             ],
           ),
-
-          SizedBox(height: 12),
-
-          Column(
-            children: benefits.map((b) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                child: Row(
-                  children: [
-                    Icon(Icons.check_circle, color: Colors.green),
-                    SizedBox(width: 8),
-                    Expanded(
-                      child: Text(b,
-                          style: TextStyle(
-                              fontSize: w * 0.04,
-                              fontWeight: FontWeight.w500)),
-                    ),
-                  ],
-                ),
-              );
-            }).toList(),
+          SizedBox(height: 20.h),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(price, style: TextStyle(color: Colors.white, fontSize: 36.sp, fontWeight: FontWeight.w900, letterSpacing: -1)),
+              Padding(
+                padding: EdgeInsets.only(bottom: 8.h, left: 6.w),
+                child: Text(period, style: TextStyle(color: Colors.white38, fontSize: 14.sp, fontWeight: FontWeight.bold)),
+              ),
+            ],
           ),
-
-          SizedBox(height: 16),
-
-          // SUBSCRIBE BUTTON
+          SizedBox(height: 25.h),
+          Divider(color: Colors.white.withOpacity(0.05), thickness: 1),
+          SizedBox(height: 25.h),
+          ...benefits.map((b) => Padding(
+            padding: EdgeInsets.only(bottom: 15.h),
+            child: Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.all(4.w),
+                  decoration: BoxDecoration(color: accentColor.withOpacity(0.1), shape: BoxShape.circle),
+                  child: Icon(Icons.check_rounded, color: accentColor, size: 14.sp),
+                ),
+                SizedBox(width: 15.w),
+                Text(b, style: TextStyle(color: Colors.white70, fontSize: 14.sp, fontWeight: FontWeight.w600)),
+              ],
+            ),
+          )),
+          SizedBox(height: 25.h),
           SizedBox(
             width: double.infinity,
+            height: 54.h,
             child: ElevatedButton(
+              onPressed: () {},
               style: ElevatedButton.styleFrom(
-                backgroundColor: borderColor,
-                padding: EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
+                backgroundColor: isPopular ? accentColor : Colors.white.withOpacity(0.05),
+                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
               ),
-              onPressed: () {
-                final name = nameController.text.trim();
-
-                if (name.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Please enter your name")),
-                  );
-                  return;
-                }
-
-                startPayment(name, title, amount);
-              },
-              child: Text("Subscribe Now",
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontSize: w * 0.045,
-                      fontWeight: FontWeight.bold)),
+              child: Text(
+                "Select Plan",
+                style: TextStyle(color: Colors.white, fontSize: 16.sp, fontWeight: FontWeight.w900),
+              ),
             ),
           ),
         ],

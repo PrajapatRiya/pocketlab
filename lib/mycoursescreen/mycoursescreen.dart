@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:percent_indicator/linear_percent_indicator.dart';
 import 'package:pocketlab/coursedetailscreen/coursedetailsscreen.dart';
 import 'package:pocketlab/videoplayerscreen/videoplayerscreen.dart';
-
 import '../CertificateScreen/CompletionCertificateScreen.dart';
 
 class MyCourseScreen extends StatefulWidget {
@@ -56,9 +56,6 @@ class _MyCourseScreenState extends State<MyCourseScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
-    final screenWidth = MediaQuery.of(context).size.width;
-
     final filteredCourses = selectedCategory == "All"
         ? courses
         : courses.where((course) {
@@ -74,280 +71,216 @@ class _MyCourseScreenState extends State<MyCourseScreen> {
     }).toList();
 
     return Scaffold(
-      backgroundColor: Colors.black,
-      body: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.05),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(height: screenHeight * 0.01),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      body: Stack(
+        children: [
+          // Background Glow Effects
+          Positioned(
+            top: -100,
+            right: -100,
+            child: _buildBlurCircle(Theme.of(context).colorScheme.primary.withOpacity(0.1), 250),
+          ),
+          Positioned(
+            bottom: 100,
+            left: -50,
+            child: _buildBlurCircle(Theme.of(context).colorScheme.secondary.withOpacity(0.08), 200),
+          ),
+          
+          SafeArea(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildAppBar(context),
+                SizedBox(height: 20.h),
 
-              /// ---------------------- AppBar ----------------------
-              Row(
-                children: [
-                  IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.arrow_back, color: Colors.white),
-                  ),
-                  Expanded(
-                    child: Center(
-                      child: InkWell(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => CourseDetailPage(),
-                            ),
-                          );
-                        },
-                        child: Text(
-                          "All Courses",
-                          style: TextStyle(
-                            fontSize: screenWidth * 0.045,
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  Container(
-                    height: screenHeight * 0.05,
-                    width: screenHeight * 0.05,
+                /// ---------------------- Search Bar ----------------------
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 24.w),
+                  child: Container(
                     decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(screenWidth * 0.03),
+                      color: Theme.of(context).colorScheme.surface,
+                      borderRadius: BorderRadius.circular(18.r),
+                      boxShadow: [
+                        BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 4))
+                      ],
                     ),
-                    child: IconButton(
-                      padding: EdgeInsets.zero,
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) =>
-                              const VideoPlayerScreen()),
-                        );
-                      },
-                      icon: Image.asset(
-                        "assets/images/video-player.png",
-                        height: screenHeight * 0.025,
-                        width: screenWidth * 0.05,
-                        color: Colors.black,
+                    child: TextField(
+                      style: TextStyle(color: Colors.white, fontSize: 15.sp),
+                      decoration: InputDecoration(
+                        hintText: "Search your courses...",
+                        hintStyle: TextStyle(color: Colors.white30, fontSize: 14.sp),
+                        prefixIcon: Icon(Icons.search_rounded, color: Theme.of(context).colorScheme.primary, size: 22.sp),
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.symmetric(vertical: 14.h),
                       ),
                     ),
                   ),
-                ],
-              ),
+                ),
 
-              SizedBox(height: screenHeight * 0.01),
+                SizedBox(height: 25.h),
 
-              /// ---------------------- Search Bar ----------------------
-              TextField(
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  hintText: "Search for courses...",
-                  hintStyle: const TextStyle(color: Colors.white70),
-                  prefixIcon: const Icon(Icons.search, color: Colors.white70),
-                  filled: true,
-                  fillColor: const Color(0xFF2E2E5E),
-                  contentPadding:
-                  EdgeInsets.symmetric(vertical: screenHeight * 0.018),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(screenWidth * 0.03),
-                    borderSide: BorderSide.none,
+                /// ---------------------- Category Tabs ----------------------
+                SizedBox(
+                  height: 42.h,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    padding: EdgeInsets.symmetric(horizontal: 24.w),
+                    physics: const BouncingScrollPhysics(),
+                    children: [
+                      _categoryChip("All"),
+                      _categoryChip("Development"),
+                      _categoryChip("Design"),
+                      _categoryChip("Business"),
+                    ],
                   ),
                 ),
-              ),
 
-              SizedBox(height: screenHeight * 0.030),
+                SizedBox(height: 25.h),
 
-              /// ---------------------- Category Tabs ----------------------
-              SizedBox(
-                height: screenHeight * 0.05,
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-                  children: [
-                    categoryChip("All", selectedCategory == "All", screenWidth),
-                    categoryChip("Development",
-                        selectedCategory == "Development", screenWidth),
-                    categoryChip("Design", selectedCategory == "Design",
-                        screenWidth),
-                    categoryChip("Business", selectedCategory == "Business",
-                        screenWidth),
-                  ],
+                /// ---------------------- COURSE LIST ----------------------
+                Expanded(
+                  child: ListView.builder(
+                    padding: EdgeInsets.fromLTRB(24.w, 0, 24.w, 100.h),
+                    physics: const BouncingScrollPhysics(),
+                    itemCount: filteredCourses.length,
+                    itemBuilder: (context, index) {
+                      final course = filteredCourses[index];
+                      return _buildCourseCard(course);
+                    },
+                  ),
                 ),
-              ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-              SizedBox(height: screenHeight * 0.015),
+  Widget _buildBlurCircle(Color color, double size) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(shape: BoxShape.circle, color: color),
+      child: Container(
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          boxShadow: [BoxShadow(color: color, blurRadius: 100, spreadRadius: 50)],
+        ),
+      ),
+    );
+  }
 
-              /// ---------------------- FIXED COURSE LIST ----------------------
-              Expanded(
-                child: ListView.builder(
-                  itemCount: filteredCourses.length,
-                  itemBuilder: (context, index) {
-                    final course = filteredCourses[index];
+  Widget _buildAppBar(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          IconButton(
+            onPressed: () => Navigator.pop(context),
+            icon: Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20.sp),
+          ),
+          Text(
+            "My Learning",
+            style: TextStyle(fontSize: 20.sp, color: Colors.white, fontWeight: FontWeight.w900, letterSpacing: -0.5),
+          ),
+          IconButton(
+            onPressed: () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const VideoPlayerScreen()));
+            },
+            icon: Icon(Icons.play_circle_fill_rounded, color: Theme.of(context).colorScheme.primary, size: 28.sp),
+          ),
+        ],
+      ),
+    );
+  }
 
-                    return Container(
-                      margin:
-                      EdgeInsets.only(bottom: screenHeight * 0.015),
-                      padding: EdgeInsets.all(screenWidth * 0.04),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF3A3A6A),
-                        borderRadius:
-                        BorderRadius.circular(screenWidth * 0.03),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          /// Image
-                          Container(
-                            height: screenHeight * 0.06,
-                            width: screenWidth * 0.15,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(
-                                  screenWidth * 0.015),
-                              image: DecorationImage(
-                                image: AssetImage(course["image"]),
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                          ),
-
-                          SizedBox(width: screenWidth * 0.04),
-
-                          /// Details + Progress
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  course["title"],
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: screenWidth * 0.038,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-
-                                SizedBox(height: screenHeight * 0.003),
-
-                                Text(
-                                  course["author"],
-                                  style: TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: screenWidth * 0.028,
-                                  ),
-                                ),
-
-                                SizedBox(height: screenHeight * 0.004),
-
-                                Row(
-                                  children: [
-                                    const Icon(Icons.star,
-                                        color: Colors.amber, size: 16),
-                                    SizedBox(
-                                        width: screenWidth * 0.01),
-                                    Text(
-                                      "${course["rating"]} ${course["reviews"]}",
-                                      style: TextStyle(
-                                        color: Colors.white70,
-                                        fontSize: screenWidth * 0.028,
-                                      ),
-                                    ),
-                                    SizedBox(
-                                        width: screenWidth * 0.04),
-                                    Text(
-                                      course["level"],
-                                      style: TextStyle(
-                                        color: Colors.white70,
-                                        fontSize: screenWidth * 0.028,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-
-                                SizedBox(height: screenHeight * 0.01),
-
-                                InkWell(
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                        const CompletionCertificateScreen(),
-                                      ),
-                                    );
-                                  },
-                                  child: LinearPercentIndicator(
-                                    lineHeight: screenHeight * 0.01,
-                                    percent: course["progress"],
-                                    animation: true,
-                                    animationDuration: 600,
-                                    barRadius:
-                                    const Radius.circular(20),
-                                    backgroundColor: Colors.white12,
-                                    progressColor: Colors.blue,
-                                    trailing: Padding(
-                                      padding:
-                                      const EdgeInsets.only(left: 8.0),
-                                      child: Text(
-                                        "${(course["progress"] * 100).toInt()}%",
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: screenWidth * 0.028,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                )
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
+  Widget _categoryChip(String text) {
+    bool isSelected = selectedCategory == text;
+    return GestureDetector(
+      onTap: () => setState(() => selectedCategory = text),
+      child: Container(
+        margin: EdgeInsets.only(right: 12.w),
+        padding: EdgeInsets.symmetric(horizontal: 20.w),
+        decoration: BoxDecoration(
+          color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(14.r),
+          border: Border.all(color: isSelected ? Colors.transparent : Colors.white.withOpacity(0.05)),
+        ),
+        child: Center(
+          child: Text(
+            text,
+            style: TextStyle(
+              color: isSelected ? Colors.white : Colors.white60,
+              fontSize: 13.sp,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+            ),
           ),
         ),
       ),
     );
   }
 
-  /// Category Chip
-  Widget categoryChip(String text, bool selected, double screenWidth) {
-    return Container(
-      margin: EdgeInsets.only(right: screenWidth * 0.03),
-      child: InkWell(
-        onTap: () => setState(() => selectedCategory = text),
-        child: Container(
-          padding: EdgeInsets.symmetric(
-            horizontal: screenWidth * 0.04,
-            vertical: screenWidth * 0.018,
-          ),
-          decoration: BoxDecoration(
-            color:
-            selected ? Colors.blue.shade600 : const Color(0xFF2E2E5E),
-            borderRadius: BorderRadius.circular(screenWidth * 0.05),
-          ),
-          child: Text(
-            text,
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: screenWidth * 0.03,
+  Widget _buildCourseCard(Map<String, dynamic> course) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(context, MaterialPageRoute(builder: (context) => const CourseDetailPage()));
+      },
+      child: Container(
+        margin: EdgeInsets.only(bottom: 20.h),
+        padding: EdgeInsets.all(16.w),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(24.r),
+          border: Border.all(color: Colors.white.withOpacity(0.05)),
+        ),
+        child: Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(18.r),
+              child: Image.asset(course["image"], height: 60.w, width: 60.w, fit: BoxFit.cover),
             ),
-          ),
+            SizedBox(width: 16.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    course["title"],
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: Colors.white, fontSize: 16.sp, fontWeight: FontWeight.w800),
+                  ),
+                  SizedBox(height: 4.h),
+                  Text(course["author"], style: TextStyle(color: Colors.white54, fontSize: 12.sp, fontWeight: FontWeight.w500)),
+                  SizedBox(height: 12.h),
+                  Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text("Progress", style: TextStyle(color: Colors.white30, fontSize: 11.sp, fontWeight: FontWeight.bold)),
+                          Text("${(course["progress"] * 100).toInt()}%",
+                              style: TextStyle(color: Theme.of(context).colorScheme.primary, fontSize: 12.sp, fontWeight: FontWeight.w900)),
+                        ],
+                      ),
+                      SizedBox(height: 8.h),
+                      LinearPercentIndicator(
+                        padding: EdgeInsets.zero,
+                        lineHeight: 6.h,
+                        percent: course["progress"],
+                        animation: true,
+                        barRadius: Radius.circular(10.r),
+                        backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                        progressColor: Theme.of(context).colorScheme.primary,
+                      ),
+                    ],
+                  )
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class CompletionCertificateScreen extends StatefulWidget {
   const CompletionCertificateScreen({super.key});
@@ -10,92 +11,99 @@ class CompletionCertificateScreen extends StatefulWidget {
 class _CompletionCertificateScreenState extends State<CompletionCertificateScreen> {
   @override
   Widget build(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
-    final screenWidth = MediaQuery.of(context).size.width;
-
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: const Color(0xFF0F0F1E),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          onPressed: () => Navigator.pop(context),
+          icon: Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20.sp),
+        ),
+      ),
       body: SafeArea(
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.05),
+          padding: EdgeInsets.symmetric(horizontal: 24.w),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              SizedBox(height: screenHeight * 0.04),
+              SizedBox(height: 20.h),
+              
+              // Certificate Image Container
               Container(
-                height: screenHeight * 0.30,
+                width: double.infinity,
+                padding: EdgeInsets.all(12.w),
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(18),
+                  color: Colors.white.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(20.r),
+                  border: Border.all(color: Colors.white.withOpacity(0.1)),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.08),
-                      blurRadius: 12,
-                      spreadRadius: 2,
-                      offset: const Offset(0, 5),
-                    ),
+                      color: Colors.black.withOpacity(0.3),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
+                    )
                   ],
                 ),
-                padding: const EdgeInsets.all(12),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(15),
-                  child: Image.asset(
-                    "assets/images/img1.jpg",
-                    fit: BoxFit.cover,
-
+                  borderRadius: BorderRadius.circular(15.r),
+                  child: AspectRatio(
+                    aspectRatio: 1.4,
+                    child: Image.asset(
+                      "assets/images/last.jpg",
+                      fit: BoxFit.cover,
+                    ),
                   ),
                 ),
               ),
 
-              SizedBox(height: screenHeight * 0.03),
+              SizedBox(height: 40.h),
 
-              /// Gradient Congratulations
-              ShaderMask(
-                shaderCallback: (bounds) => const LinearGradient(
-                  colors: [Colors.blue, Colors.purple],
-                ).createShader(bounds),
-                child: const Text(
-                  "Congratulations!",
-                  style: TextStyle(
-                    fontSize: 30,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
+              // Congratulations Section
+              Icon(Icons.emoji_events_rounded, color: Colors.amber, size: 60.sp),
+              SizedBox(height: 20.h),
+              
+              Text(
+                "Congratulations!",
+                style: TextStyle(
+                  fontSize: 30.sp,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  letterSpacing: 1,
                 ),
               ),
-              SizedBox(height: screenHeight * 0.01),
+              
+              SizedBox(height: 12.h),
 
               Text(
-                "You have successfully completed your course",
+                "You have successfully completed the course and earned your certificate of achievement.",
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: screenWidth * 0.042,
-                  color: Colors.grey[700],
-                  height: 1.4,
+                  fontSize: 15.sp,
+                  color: Colors.white54,
+                  height: 1.5,
                 ),
               ),
-
-              SizedBox(height: screenHeight * 0.04),
 
               const Spacer(),
 
-              /// Awesome Download Button
+              // Download Button
               Container(
+                width: double.infinity,
+                height: 56.h,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(14),
                   gradient: const LinearGradient(
-                    colors: [
-                      Color(0xFF1565C0),
-                      Color(0xFF1E88E5),
-                    ],
+                    colors: [Color(0xFF7B5FFF), Color(0xFF4A00E0)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
+                  borderRadius: BorderRadius.circular(16.r),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.blueAccent.withOpacity(0.3),
-                      blurRadius: 10,
-                      spreadRadius: 1,
-                      offset: const Offset(0, 4),
-                    ),
+                      color: const Color(0xFF7B5FFF).withOpacity(0.3),
+                      blurRadius: 12,
+                      offset: const Offset(0, 6),
+                    )
                   ],
                 ),
                 child: ElevatedButton(
@@ -103,33 +111,25 @@ class _CompletionCertificateScreenState extends State<CompletionCertificateScree
                     backgroundColor: Colors.transparent,
                     shadowColor: Colors.transparent,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(16.r),
                     ),
-                    padding: EdgeInsets.symmetric(vertical: screenHeight * 0.018),
                   ),
-                  onPressed: () {},
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("Certificate downloading..."), backgroundColor: Colors.green),
+                    );
+                  },
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.25),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.download_rounded,
-                          color: Colors.white,
-                          size: screenWidth * 0.055,
-                        ),
-                      ),
-                      SizedBox(width: screenWidth * 0.03),
+                      Icon(Icons.download_rounded, color: Colors.white, size: 24.sp),
+                      SizedBox(width: 12.w),
                       Text(
                         "Download Certificate",
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: screenWidth * 0.045,
-                          fontWeight: FontWeight.w600,
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ],
@@ -137,7 +137,7 @@ class _CompletionCertificateScreenState extends State<CompletionCertificateScree
                 ),
               ),
 
-              SizedBox(height: screenHeight * 0.025),
+              SizedBox(height: 30.h),
             ],
           ),
         ),

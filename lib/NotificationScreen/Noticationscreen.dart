@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class NotificationScreen extends StatefulWidget {
   const NotificationScreen({super.key});
@@ -11,22 +12,22 @@ class _NotificationScreenState extends State<NotificationScreen> {
   // Dummy notifications list
   List<Map<String, dynamic>> messages = [
     {
-      "title": "Welcome!",
-      "body": "Thanks for installing the app.",
+      "title": "Welcome to Pocket Lab!",
+      "body": "Thanks for joining us. Let's start your learning journey today.",
       "isRead": false,
-      "highlight": true,
+      "time": "2 mins ago",
     },
     {
-      "title": "Reminder",
-      "body": "Don't forget to check your tasks today.",
+      "title": "New Lesson Added",
+      "body": "A new lesson has been added to your 'Flutter Development' course.",
       "isRead": false,
-      "highlight": false,
+      "time": "1 hour ago",
     },
     {
-      "title": "Update Available",
-      "body": "New features added in the latest version.",
-      "isRead": false,
-      "highlight": false,
+      "title": "Daily Goal Reached",
+      "body": "Congratulations! You've completed your study goal for today.",
+      "isRead": true,
+      "time": "Yesterday",
     },
   ];
 
@@ -34,234 +35,363 @@ class _NotificationScreenState extends State<NotificationScreen> {
   List<Map<String, dynamic>> announcements = [
     {
       "title": "New Course Launched",
-      "body": "Flutter Advanced Course is now available!",
+      "body": "Flutter Advanced Course is now available with 50% discount!",
     },
     {
-      "title": "Special Offer",
-      "body": "Get 40% OFF on yearly subscription.",
+      "title": "Live Workshop Tomorrow",
+      "body": "Join our live Q&A session with industry experts at 6 PM.",
     }
   ];
 
-  // Show popup dialog
-  void _openNotificationDialog(String title, String body) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: Colors.grey[900],
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(
-          title,
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
-        content: Text(body, style: const TextStyle(color: Colors.white70)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("OK", style: TextStyle(color: Colors.blueAccent)),
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    
+    return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
+      body: Stack(
+        children: [
+          // Background Glow Effects (Bubbles)
+          Positioned(
+            top: -100,
+            right: -100,
+            child: _buildBlurCircle(theme.colorScheme.primary.withValues(alpha: 0.15), 250),
+          ),
+          Positioned(
+            bottom: 100,
+            left: -50,
+            child: _buildBlurCircle(theme.colorScheme.secondary.withValues(alpha: 0.1), 200),
+          ),
+          
+          SafeArea(
+            child: Column(
+              children: [
+                _buildAppBar(context),
+                Expanded(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    padding: EdgeInsets.symmetric(horizontal: 24.w),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(height: 20.h),
+
+                        /// ------------------ ANNOUNCEMENT SECTION ------------------
+                        _buildSectionHeader("📢 Announcements"),
+                        SizedBox(height: 15.h),
+
+                        ...announcements.map((a) => _buildAnnouncementCard(a)),
+
+                        SizedBox(height: 35.h),
+
+                        /// ---------------- NOTIFICATIONS SECTION ------------------
+                        _buildSectionHeader("🔔 Recent Notifications"),
+                        SizedBox(height: 15.h),
+
+                        messages.isEmpty
+                            ? _buildEmptyState()
+                            : Column(
+                                children: messages.asMap().entries.map((entry) {
+                                  return _buildNotificationItem(entry.value, entry.key);
+                                }).toList(),
+                              ),
+                        SizedBox(height: 100.h), 
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
-    final screenWidth = MediaQuery.of(context).size.width;
-
-    return Scaffold(
-      backgroundColor: Colors.black,
-
-      appBar: AppBar(
-        title: const Text("Notifications"),
-        centerTitle: true,
-        backgroundColor: Colors.grey.shade900,
-        elevation: 0,
-        titleTextStyle: const TextStyle(
-          color: Colors.white,
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
+  Widget _buildBlurCircle(Color color, double size) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(shape: BoxShape.circle, color: color),
+      child: Container(
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          boxShadow: [BoxShadow(color: color, blurRadius: 100, spreadRadius: 50)],
         ),
-        iconTheme: const IconThemeData(color: Colors.white),
       ),
+    );
+  }
 
-      body: ListView(
-        padding: EdgeInsets.symmetric(
-          horizontal: screenWidth * 0.04,
-          vertical: screenHeight * 0.015,
-        ),
+  Widget _buildAppBar(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // ------------------ ANNOUNCEMENT SECTION ------------------
-          Text(
-            "📢 Announcements",
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: screenWidth * 0.05,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          SizedBox(height: screenHeight * 0.01),
-
-          ...announcements.map((a) {
-            return Container(
-              margin: EdgeInsets.only(bottom: screenHeight * 0.012),
-              padding: EdgeInsets.all(screenWidth * 0.045),
+          GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: Container(
+              padding: EdgeInsets.all(10.w),
               decoration: BoxDecoration(
-                color: Colors.blueGrey[900],
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: Colors.blueGrey),
+                color: Colors.white.withValues(alpha: 0.05),
+                borderRadius: BorderRadius.circular(12.r),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    a["title"],
-                    style: TextStyle(
-                      fontSize: screenWidth * 0.045,
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  SizedBox(height: screenHeight * 0.005),
-                  Text(
-                    a["body"],
-                    style: TextStyle(
-                      fontSize: screenWidth * 0.038,
-                      color: Colors.white70,
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }),
-
-          SizedBox(height: screenHeight * 0.02),
-
-          // ---------------- NOTIFICATIONS SECTION ------------------
-          Text(
-            "🔔 Notifications",
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: screenWidth * 0.05,
-              fontWeight: FontWeight.bold,
+              child: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 18),
             ),
           ),
-          SizedBox(height: screenHeight * 0.01),
-
-          ...messages.asMap().entries.map((entry) {
-            int index = entry.key;
-            var item = entry.value;
-
-            return Dismissible(
-              key: UniqueKey(),
-              direction: DismissDirection.endToStart,
-              onDismissed: (_) => setState(() => messages.removeAt(index)),
-              background: Container(
-                alignment: Alignment.centerRight,
-                padding: EdgeInsets.only(right: screenWidth * 0.05),
-                decoration: BoxDecoration(
-                  color: Colors.redAccent,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: const Icon(Icons.delete, color: Colors.white),
-              ),
-              child: GestureDetector(
-                onTap: () {
-                  setState(() => item["isRead"] = true);
-                  _openNotificationDialog(item["title"], item["body"]);
-                },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  margin: EdgeInsets.only(bottom: screenHeight * 0.015),
-                  padding: EdgeInsets.all(screenWidth * 0.045),
-                  decoration: BoxDecoration(
-                    gradient: item["highlight"]
-                        ? const LinearGradient(
-                      colors: [Colors.blueAccent, Colors.purpleAccent],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    )
-                        : null,
-                    color: item["isRead"] || !item["highlight"]
-                        ? Colors.grey[850]
-                        : null,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.grey[700]!),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black45,
-                        blurRadius: 10,
-                        offset: const Offset(0, 5),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: EdgeInsets.all(screenWidth * 0.01),
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: LinearGradient(
-                            colors: [Colors.blue, Colors.purple],
-                          ),
-                        ),
-                        child: CircleAvatar(
-                          radius: screenWidth * 0.065,
-                          backgroundColor: Colors.black,
-                          child: Icon(
-                            Icons.notifications,
-                            color: Colors.white,
-                            size: screenWidth * 0.06,
-                          ),
-                        ),
-                      ),
-
-                      SizedBox(width: screenWidth * 0.04),
-
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              item["title"],
-                              style: TextStyle(
-                                fontSize: screenWidth * 0.045,
-                                fontWeight: FontWeight.bold,
-                                color: item["highlight"]
-                                    ? Colors.white
-                                    : Colors.white70,
-                              ),
-                            ),
-                            SizedBox(height: screenHeight * 0.005),
-                            Text(
-                              item["body"],
-                              style: TextStyle(
-                                fontSize: screenWidth * 0.038,
-                                color: item["highlight"]
-                                    ? Colors.white70
-                                    : Colors.white60,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      if (!item["isRead"])
-                        Container(
-                          height: screenWidth * 0.03,
-                          width: screenWidth * 0.03,
-                          decoration: const BoxDecoration(
-                            color: Colors.blueAccent,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          }),
+          Text(
+            "Notifications",
+            style: TextStyle(
+              fontSize: 20.sp,
+              color: Colors.white,
+              fontWeight: FontWeight.w900,
+              letterSpacing: -0.5,
+            ),
+          ),
+          const SizedBox(width: 40), 
         ],
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title) {
+    return Text(
+      title,
+      style: TextStyle(
+        color: Colors.white,
+        fontSize: 18.sp,
+        fontWeight: FontWeight.w900,
+        letterSpacing: -0.5,
+      ),
+    );
+  }
+
+  Widget _buildAnnouncementCard(Map<String, dynamic> a) {
+    final theme = Theme.of(context);
+    return Container(
+      margin: EdgeInsets.only(bottom: 16.h),
+      padding: EdgeInsets.all(20.w),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [theme.colorScheme.primary.withValues(alpha: 0.2), theme.colorScheme.secondary.withValues(alpha: 0.1)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(24.r),
+        border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.2)),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 15, offset: const Offset(0, 8))
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(8.w),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10.r),
+                ),
+                child: Icon(Icons.campaign_rounded, color: Colors.white, size: 20.sp),
+              ),
+              SizedBox(width: 12.w),
+              Expanded(
+                child: Text(
+                  a["title"],
+                  style: const TextStyle(
+                    fontSize: 15,
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 12.h),
+          Text(
+            a["body"],
+            style: TextStyle(
+              fontSize: 13.sp,
+              color: Colors.white70,
+              fontWeight: FontWeight.w500,
+              height: 1.4,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNotificationItem(Map<String, dynamic> item, int index) {
+    final theme = Theme.of(context);
+    bool isRead = item["isRead"];
+    
+    return Dismissible(
+      key: UniqueKey(),
+      direction: DismissDirection.endToStart,
+      onDismissed: (_) {
+        setState(() => messages.removeAt(index));
+      },
+      background: Container(
+        alignment: Alignment.centerRight,
+        padding: EdgeInsets.only(right: 20.w),
+        margin: EdgeInsets.only(bottom: 12.h),
+        decoration: BoxDecoration(
+          color: Colors.redAccent.withValues(alpha: 0.2),
+          borderRadius: BorderRadius.circular(20.r),
+        ),
+        child: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 28),
+      ),
+      child: GestureDetector(
+        onTap: () {
+          setState(() => item["isRead"] = true);
+          _showNotificationDetail(item);
+        },
+        child: Container(
+          margin: EdgeInsets.only(bottom: 12.h),
+          padding: EdgeInsets.all(16.w),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            borderRadius: BorderRadius.circular(22.r),
+            border: Border.all(
+              color: isRead ? Colors.white.withValues(alpha: 0.05) : theme.colorScheme.primary.withValues(alpha: 0.3),
+            ),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: EdgeInsets.all(10.w),
+                decoration: BoxDecoration(
+                  color: (isRead ? Colors.grey : theme.colorScheme.primary).withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.notifications_active_outlined,
+                  color: isRead ? Colors.white24 : theme.colorScheme.primary,
+                  size: 20.sp,
+                ),
+              ),
+              SizedBox(width: 15.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            item["title"],
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 15.sp,
+                              fontWeight: isRead ? FontWeight.w600 : FontWeight.w900,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                        Text(
+                          item["time"],
+                          style: TextStyle(color: Colors.white24, fontSize: 11.sp, fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 6.h),
+                    Text(
+                      item["body"],
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 13.sp,
+                        color: Colors.white54,
+                        fontWeight: FontWeight.w500,
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        children: [
+          SizedBox(height: 60.h),
+          Icon(Icons.notifications_off_outlined, size: 80.sp, color: Colors.white.withValues(alpha: 0.05)),
+          SizedBox(height: 20.h),
+          Text("All caught up!", style: TextStyle(color: Colors.white24, fontSize: 16.sp, fontWeight: FontWeight.bold)),
+        ],
+      ),
+    );
+  }
+
+  void _showNotificationDetail(Map<String, dynamic> item) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        padding: EdgeInsets.all(28.w),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(35.r)),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10.r),
+                  ),
+                  child: Text("NOTIFICATION", 
+                    style: TextStyle(color: Theme.of(context).colorScheme.primary, fontSize: 10.sp, fontWeight: FontWeight.w900, letterSpacing: 1)),
+                ),
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close_rounded, color: Colors.white38),
+                )
+              ],
+            ),
+            SizedBox(height: 20.h),
+            Text(item["title"], style: TextStyle(color: Colors.white, fontSize: 22.sp, fontWeight: FontWeight.w900, letterSpacing: -0.5)),
+            SizedBox(height: 8.h),
+            Text(item["time"], style: TextStyle(color: Theme.of(context).colorScheme.secondary, fontSize: 13.sp, fontWeight: FontWeight.bold)),
+            SizedBox(height: 25.h),
+            Text(item["body"], style: TextStyle(color: Colors.white70, fontSize: 15.sp, height: 1.6, fontWeight: FontWeight.w500)),
+            SizedBox(height: 40.h),
+            SizedBox(
+              width: double.infinity,
+              height: 56.h,
+              child: ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+                  elevation: 8,
+                  shadowColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+                ),
+                child: Text("Got it", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16.sp)),
+              ),
+            ),
+            SizedBox(height: 20.h),
+          ],
+        ),
       ),
     );
   }

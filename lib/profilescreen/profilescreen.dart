@@ -1,7 +1,9 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:pocketlab/loginsignupscreen/login_signupscreen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -11,9 +13,9 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  final TextEditingController nameCtrl = TextEditingController();
-  final TextEditingController emailCtrl = TextEditingController();
-  final TextEditingController phoneCtrl = TextEditingController();
+  final TextEditingController nameCtrl = TextEditingController(text: "Sophia");
+  final TextEditingController emailCtrl = TextEditingController(text: "sophia@example.com");
+  final TextEditingController phoneCtrl = TextEditingController(text: "+1 234 567 890");
 
   File? _profileImage;
   final ImagePicker _picker = ImagePicker();
@@ -22,37 +24,75 @@ class _ProfileScreenState extends State<ProfileScreen> {
   List<File> certificates = [];
 
   final List<Map<String, String>> paymentHistory = [
-    {"date": "11-01-2022", "amount": "\$9.99", "status": "Success"},
-    {"date": "24-11-2024", "amount": "\$9.99", "status": "Success"},
-    {"date": "16-12-2025", "amount": "\$9.99", "status": "Failed"},
+    {"date": "11 Jan 2024", "amount": "\$9.99", "status": "Success"},
+    {"date": "24 Nov 2023", "amount": "\$9.99", "status": "Success"},
+    {"date": "16 Dec 2022", "amount": "\$9.99", "status": "Failed"},
   ];
 
-  // Image Picker Functions
+  // Pick Profile Image
   Future<void> _pickImage(ImageSource source) async {
-    PermissionStatus status;
-    if (Platform.isIOS) {
-      status = source == ImageSource.camera
-          ? await Permission.camera.request()
-          : await Permission.photos.request();
-    } else {
-      status = source == ImageSource.camera
-          ? await Permission.camera.request()
-          : await Permission.photos.request();
-      if (!status.isGranted) status = await Permission.storage.request();
-    }
+    PermissionStatus status = source == ImageSource.camera
+        ? await Permission.camera.request()
+        : await Permission.photos.request();
 
-    if (status.isGranted) {
+    if (status.isGranted || status.isLimited) {
       final XFile? pickedFile = await _picker.pickImage(source: source, imageQuality: 80);
       if (pickedFile != null) {
         setState(() => _profileImage = File(pickedFile.path));
       }
-    } else if (status.isPermanentlyDenied) {
-      openAppSettings();
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Permission denied")),
-      );
+      openAppSettings();
     }
+  }
+
+  // Pick Certificate Image - Direct Gallery Access
+  Future<void> _pickCertificate() async {
+    // Request permission first for safety
+    PermissionStatus status = await Permission.photos.request();
+    
+    if (status.isGranted || status.isLimited) {
+      final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
+      if (pickedFile != null) {
+        setState(() => certificates.add(File(pickedFile.path)));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Certificate added successfully!"), backgroundColor: Colors.green),
+        );
+      }
+    } else {
+      openAppSettings();
+    }
+  }
+
+  // Logout Function
+  void _logout() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1B1B2F),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
+        title: const Text("Logout", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        content: const Text("Are you sure you want to logout?", style: TextStyle(color: Colors.white70)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text("Cancel", style: TextStyle(color: Colors.white38)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+            onPressed: () {
+              Navigator.pop(ctx); // Close dialog
+              // Clear navigation stack and go to Login screen
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (context) => const LoginSignupScreen()),
+                (route) => false,
+              );
+            },
+            child: const Text("Logout", style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showImageSourceChoice() {
@@ -60,29 +100,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
       context: context,
       backgroundColor: Colors.transparent,
       builder: (_) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.black87,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        padding: EdgeInsets.all(24.w),
+        decoration: BoxDecoration(
+          color: Theme.of(context).scaffoldBackgroundColor,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(30.r)),
         ),
         child: SafeArea(
-          child: Wrap(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              ListTile(
-                leading: const Icon(Icons.photo_library, color: Colors.white),
-                title: const Text('Gallery', style: TextStyle(color: Colors.white)),
-                onTap: () {
-                  Navigator.pop(context);
-                  _pickImage(ImageSource.gallery);
-                },
+              Text("Profile Photo", style: TextStyle(color: Colors.white, fontSize: 18.sp, fontWeight: FontWeight.bold)),
+              SizedBox(height: 25.h),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _sourceOption(Icons.photo_library_rounded, "Gallery", () {
+                    Navigator.pop(context);
+                    _pickImage(ImageSource.gallery);
+                  }),
+                  _sourceOption(Icons.camera_alt_rounded, "Camera", () {
+                    Navigator.pop(context);
+                    _pickImage(ImageSource.camera);
+                  }),
+                ],
               ),
-              ListTile(
-                leading: const Icon(Icons.camera_alt, color: Colors.white),
-                title: const Text('Camera', style: TextStyle(color: Colors.white)),
-                onTap: () {
-                  Navigator.pop(context);
-                  _pickImage(ImageSource.camera);
-                },
-              ),
+              SizedBox(height: 15.h),
             ],
           ),
         ),
@@ -90,50 +132,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Future<void> _pickCertificate() async {
-    final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
-    if (pickedFile != null) {
-      setState(() => certificates.add(File(pickedFile.path)));
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Certificate added!")),
-      );
-    }
-  }
-
-  void _removeCertificate(int index) {
-    setState(() => certificates.removeAt(index));
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Certificate removed")),
-    );
-  }
-
-  // LOGOUT FUNCTION WITH CONFIRMATION
-  void _showLogoutDialog() {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.grey[900],
-        title: const Text("Logout", style: TextStyle(color: Colors.white)),
-        content: const Text("Are you sure you want to logout?", style: TextStyle(color: Colors.white70)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text("Cancel", style: TextStyle(color: Colors.grey)),
+  Widget _sourceOption(IconData icon, String label, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          Container(
+            padding: EdgeInsets.all(16.w),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.05),
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white.withOpacity(0.05)),
+            ),
+            child: Icon(icon, color: Theme.of(context).colorScheme.primary, size: 28.sp),
           ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(ctx); // Close dialog
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text("Logged out successfully!"),
-                  backgroundColor: Colors.green,
-                ),
-              );
-              Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
-              // Ya phir: Navigator.popUntil(context, ModalRoute.withName('/home'));
-            },
-            child: const Text("Logout", style: TextStyle(color:Color(0xFF0D47A1) )),
-          ),
+          SizedBox(height: 10.h),
+          Text(label, style: TextStyle(color: Colors.white70, fontSize: 14.sp, fontWeight: FontWeight.w600)),
         ],
       ),
     );
@@ -141,103 +155,127 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
-    final screenWidth = MediaQuery.of(context).size.width;
-
     return Scaffold(
-      backgroundColor: Colors.black,
-      resizeToAvoidBottomInset: true,
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildAppBar(), // Now includes Logout button
-            Expanded(
-              child: SingleChildScrollView(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.05),
-                  child: Column(
-                    children: [
-                      SizedBox(height: 20),
-                      _buildProfilePhoto(screenWidth),
-                      SizedBox(height: screenHeight * 0.03),
-
-                      showSavedData ? _displaySavedData() : _buildInputFields(screenHeight),
-
-                      SizedBox(height: screenHeight * 0.04),
-                      _saveBtn(screenWidth, screenHeight),
-                      SizedBox(height: screenHeight * 0.04),
-
-                      _subscriptionStatus(screenHeight, screenWidth),
-                      SizedBox(height: screenHeight * 0.03),
-
-                      _paymentHistory(screenHeight, screenWidth),
-                      SizedBox(height: screenHeight * 0.04),
-
-                      _certificatesSection(screenHeight, screenWidth),
-
-                      SizedBox(height: MediaQuery.of(context).viewInsets.bottom + 100),
-                    ],
-                  ),
-                ),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      body: Stack(
+        children: [
+          Positioned(
+            top: -100,
+            right: -100,
+            child: _buildBlurCircle(Theme.of(context).colorScheme.primary.withOpacity(0.12), 250),
+          ),
+          Positioned(
+            bottom: 100,
+            left: -50,
+            child: _buildBlurCircle(Theme.of(context).colorScheme.secondary.withOpacity(0.08), 200),
+          ),
+          
+          SafeArea(
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              padding: EdgeInsets.fromLTRB(24.w, 10.h, 24.w, 100.h),
+              child: Column(
+                children: [
+                  _buildAppBar(),
+                  SizedBox(height: 30.h),
+                  _buildProfilePhoto(),
+                  SizedBox(height: 40.h),
+                  _buildInputFields(),
+                  SizedBox(height: 40.h),
+                  _buildSubscriptionCard(),
+                  SizedBox(height: 40.h),
+                  _buildPaymentHistory(),
+                  SizedBox(height: 40.h),
+                  _buildCertificatesSection(),
+                ],
               ),
             ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // APPBAR WITH LOGOUT BUTTON
-  Widget _buildAppBar() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () => Navigator.pop(context),
-            child: const Icon(Icons.arrow_back, color: Colors.white, size: 28),
-          ),
-          const SizedBox(width: 16),
-          const Text(
-            "Edit Profile",
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
-          ),
-          const Spacer(),
-
-          // LOGOUT BUTTON
-          IconButton(
-            onPressed: _showLogoutDialog,
-            icon: const Icon(Icons.logout, color: Colors.white, size: 28),
-            tooltip: "Logout",
           ),
         ],
       ),
     );
   }
 
-  Widget _buildProfilePhoto(double screenWidth) {
+  Widget _buildBlurCircle(Color color, double size) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(shape: BoxShape.circle, color: color),
+      child: Container(
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          boxShadow: [BoxShadow(color: color, blurRadius: 100, spreadRadius: 50)],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAppBar() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        GestureDetector(
+          onTap: () => Navigator.pop(context),
+          child: Container(
+            padding: EdgeInsets.all(10.w),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(12.r),
+            ),
+            child: Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 18.sp),
+          ),
+        ),
+        Text("Profile Settings", style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: -0.5)),
+        GestureDetector(
+          onTap: _logout, // Logout function linked here
+          child: Container(
+            padding: EdgeInsets.all(10.w),
+            decoration: BoxDecoration(
+              color: Colors.redAccent.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12.r),
+            ),
+            child: Icon(Icons.logout_rounded, color: Colors.redAccent, size: 18.sp),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildProfilePhoto() {
     return Center(
       child: Stack(
         children: [
-          CircleAvatar(
-            radius: screenWidth * 0.16,
-            backgroundColor: Colors.grey[800],
-            backgroundImage: _profileImage != null
-                ? FileImage(_profileImage!)
-                : const AssetImage("assets/images/profile1.jpg") as ImageProvider,
+          Container(
+            padding: EdgeInsets.all(4.w),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: Theme.of(context).colorScheme.primary, width: 2),
+            ),
+            child: CircleAvatar(
+              radius: 65.r,
+              backgroundColor: Colors.white.withOpacity(0.05),
+              backgroundImage: _profileImage != null
+                  ? FileImage(_profileImage!)
+                  : const AssetImage("assets/images/profile1.jpg") as ImageProvider,
+            ),
           ),
           Positioned(
-            right: 6,
-            bottom: 6,
+            right: 4,
+            bottom: 4,
             child: GestureDetector(
               onTap: _showImageSourceChoice,
               child: Container(
-                padding: const EdgeInsets.all(10),
+                padding: EdgeInsets.all(10.w),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.blue.shade900,
+                  gradient: LinearGradient(
+                    colors: [Theme.of(context).colorScheme.primary, Theme.of(context).colorScheme.secondary],
+                  ),
+                  boxShadow: [
+                    BoxShadow(color: Theme.of(context).colorScheme.primary.withOpacity(0.3), blurRadius: 10, offset: const Offset(0, 4))
+                  ],
                 ),
-                child: const Icon(Icons.camera_alt, color: Colors.white, size: 15),
+                child: Icon(Icons.edit_rounded, color: Colors.white, size: 18.sp),
               ),
             ),
           ),
@@ -246,207 +284,235 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildInputFields(double h) {
+  Widget _buildInputFields() {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _label("Full Name"),
-        _inputField(nameCtrl, "Enter your name"),
-        SizedBox(height: h * 0.02),
-        _label("Email"),
-        _inputField(emailCtrl, "Enter your email"),
-        SizedBox(height: h * 0.02),
-        _label("Phone Number"),
-        _inputField(phoneCtrl, "Enter mobile number"),
+        _profileTextField("Full Name", nameCtrl, Icons.person_outline_rounded),
+        SizedBox(height: 20.h),
+        _profileTextField("Email Address", emailCtrl, Icons.email_outlined),
+        SizedBox(height: 20.h),
+        _profileTextField("Phone Number", phoneCtrl, Icons.phone_android_rounded),
       ],
     );
   }
 
-  Widget _displaySavedData() {
+  Widget _profileTextField(String label, TextEditingController controller, IconData icon) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _infoRow("Full Name", nameCtrl.text),
-        _infoRow("Email", emailCtrl.text),
-        _infoRow("Phone Number", phoneCtrl.text),
+        Text(label, style: TextStyle(color: Colors.white54, fontSize: 13.sp, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+        SizedBox(height: 10.h),
+        Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius: BorderRadius.circular(18.r),
+            border: Border.all(color: Colors.white.withOpacity(0.05)),
+          ),
+          child: TextField(
+            controller: controller,
+            style: TextStyle(color: Colors.white, fontSize: 15.sp, fontWeight: FontWeight.w600),
+            decoration: InputDecoration(
+              prefixIcon: Icon(icon, color: Theme.of(context).colorScheme.primary, size: 20.sp),
+              border: InputBorder.none,
+              contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 15.h),
+            ),
+          ),
+        ),
       ],
     );
   }
 
-  Widget _infoRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildSubscriptionCard() {
+    return Container(
+      padding: EdgeInsets.all(24.w),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [const Color(0xFF1E3C72), const Color(0xFF2A5298)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(28.r),
+        boxShadow: [
+          BoxShadow(color: const Color(0xFF1E3C72).withOpacity(0.3), blurRadius: 20, offset: const Offset(0, 10))
+        ],
+      ),
+      child: Row(
         children: [
-          Text(label, style: const TextStyle(color: Colors.white70, fontSize: 14)),
-          const SizedBox(height: 6),
-          Text(value, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600)),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text("Pocket Lab Pro", style: TextStyle(color: Colors.white, fontSize: 20.sp, fontWeight: FontWeight.w900)),
+                SizedBox(height: 6.h),
+                Text("Expires on 12 Dec 2024", style: TextStyle(color: Colors.white70, fontSize: 13.sp, fontWeight: FontWeight.w500)),
+              ],
+            ),
+          ),
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 10.h),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12.r),
+            ),
+            child: Text("Renew", style: TextStyle(color: const Color(0xFF1E3C72), fontWeight: FontWeight.w900, fontSize: 13.sp)),
+          ),
         ],
       ),
     );
   }
 
-  Widget _saveBtn(double w, double h) {
-    return SizedBox(
-      width: w * 0.9,
-      height: h * 0.065,
-      child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.blue.shade900,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-          elevation: 10,
-        ),
-        onPressed: () {
-          if (nameCtrl.text.isNotEmpty && emailCtrl.text.isNotEmpty && phoneCtrl.text.isNotEmpty) {
-            setState(() => showSavedData = true);
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text("Profile saved successfully!")),
-            );
-          } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text("Please fill all fields")),
-            );
-          }
-        },
-        child: const Text("Save Changes", style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.white)),
-      ),
-    );
-  }
-
-  Widget _subscriptionStatus(double h, double w) {
-    return Card(
-      color: Colors.blue.shade900.withOpacity(0.2),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: EdgeInsets.symmetric(vertical: h * 0.02, horizontal: w * 0.04),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text("Subscription Status", style: TextStyle(color: Colors.white70, fontSize: 14)),
-                SizedBox(height: 5),
-                Text("Active", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-              ],
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-              decoration: BoxDecoration(color: Colors.green, borderRadius: BorderRadius.circular(12)),
-              child: const Text("Renew", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _paymentHistory(double h, double w) {
+  Widget _buildPaymentHistory() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text("Payment History", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
-        SizedBox(height: h * 0.02),
-        ...paymentHistory.map((p) {
-          bool success = p['status'] == "Success";
-          return Card(
-            color: Colors.grey[900],
-            margin: EdgeInsets.symmetric(vertical: h * 0.008),
-            child: ListTile(
-              leading: CircleAvatar(
-                backgroundColor: success ? Colors.green : Colors.red,
-                child: Icon(success ? Icons.check : Icons.close, color: Colors.white),
+        Text("Payment History", style: TextStyle(color: Colors.white, fontSize: 18.sp, fontWeight: FontWeight.w900, letterSpacing: -0.5)),
+        SizedBox(height: 20.h),
+        ...paymentHistory.map((p) => Container(
+          margin: EdgeInsets.only(bottom: 15.h),
+          padding: EdgeInsets.all(16.w),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius: BorderRadius.circular(20.r),
+            border: Border.all(color: Colors.white.withOpacity(0.05)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(10.w),
+                decoration: BoxDecoration(
+                  color: (p['status'] == "Success" ? Colors.green : Colors.red).withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  p['status'] == "Success" ? Icons.check_rounded : Icons.close_rounded,
+                  color: p['status'] == "Success" ? Colors.green : Colors.red,
+                  size: 18.sp,
+                ),
               ),
-              title: Text(p['date']!, style: const TextStyle(color: Colors.white)),
-              subtitle: Text(p['status']!, style: TextStyle(color: success ? Colors.green : Colors.red, fontWeight: FontWeight.bold)),
-              trailing: Text(p['amount']!, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-            ),
-          );
-        }),
+              SizedBox(width: 15.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(p['date']!, style: TextStyle(color: Colors.white, fontSize: 14.sp, fontWeight: FontWeight.bold)),
+                    SizedBox(height: 2.h),
+                    Text(p['status']!, style: TextStyle(color: Colors.white38, fontSize: 12.sp, fontWeight: FontWeight.w500)),
+                  ],
+                ),
+              ),
+              Text(p['amount']!, style: TextStyle(color: Colors.white, fontSize: 16.sp, fontWeight: FontWeight.w900)),
+            ],
+          ),
+        )),
       ],
     );
   }
 
-  Widget _certificatesSection(double h, double w) {
+  Widget _buildCertificatesSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text("Certificates & Achievements", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+            Text("Certificates", style: TextStyle(color: Colors.white, fontSize: 18.sp, fontWeight: FontWeight.w900, letterSpacing: -0.5)),
             GestureDetector(
               onTap: _pickCertificate,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                decoration: BoxDecoration(color: Colors.blue.shade900, borderRadius: BorderRadius.circular(30)),
-                child: const Row(children: [
-                  Icon(Icons.add, color: Colors.white),
-                  SizedBox(width: 6),
-                  Text("Add", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))
-                ]),
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12.r),
+                  border: Border.all(color: Theme.of(context).colorScheme.primary.withOpacity(0.2)),
+                ),
+                child: Text("Add New", style: TextStyle(color: Theme.of(context).colorScheme.primary, fontSize: 13.sp, fontWeight: FontWeight.w800)),
               ),
             ),
           ],
         ),
-        SizedBox(height: h * 0.02),
-        certificates.isEmpty
-            ? Container(
-          width: double.infinity,
-          padding: EdgeInsets.all(h * 0.06),
-          decoration: BoxDecoration(
-              color: Colors.grey[900],
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.white12)),
-          child: Column(
-            children: [
-              Icon(Icons.emoji_events_outlined, size: 70, color: Colors.amber[700]),
-              const SizedBox(height: 16),
-              const Text("No certificates yet", style: TextStyle(color: Colors.white70, fontSize: 16)),
-              const Text("Add your achievements!", style: TextStyle(color: Colors.grey, fontSize: 14)),
-            ],
-          ),
-        )
-            : GridView.builder(
-          physics: const NeverScrollableScrollPhysics(),
-          shrinkWrap: true,
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3, crossAxisSpacing: 12, mainAxisSpacing: 12, childAspectRatio: 1),
-          itemCount: certificates.length,
-          itemBuilder: (ctx, i) => Stack(
-            children: [
-              ClipRRect(
-                  borderRadius: BorderRadius.circular(14),
-                  child: Image.file(certificates[i], fit: BoxFit.cover, width: double.infinity, height: double.infinity)),
-              Positioned(
-                  top: 6,
-                  right: 6,
-                  child: GestureDetector(
-                      onTap: () => _removeCertificate(i),
-                      child: const CircleAvatar(radius: 14, backgroundColor: Colors.red, child: Icon(Icons.close, size: 18, color: Colors.white)))),
-            ],
-          ),
-        ),
+        SizedBox(height: 20.h),
+        certificates.isEmpty && paymentHistory.isEmpty // Just a condition for mock
+          ? _buildEmptyCertificates()
+          : SizedBox(
+              height: 120.h,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                itemCount: certificates.length + 3, // Mock + Real
+                itemBuilder: (context, index) {
+                  if (index < 3) {
+                    return _certificateItem(index == 0 ? "UI/UX Master" : index == 1 ? "Flutter Expert" : "Python Advanced");
+                  }
+                  return _certificateImageItem(certificates[index - 3]);
+                },
+              ),
+            )
       ],
     );
   }
 
-  Widget _label(String text) => Padding(
-    padding: const EdgeInsets.only(left: 4, bottom: 8),
-    child: Text(text, style: const TextStyle(color: Colors.white70, fontSize: 15)),
-  );
+  Widget _buildEmptyCertificates() {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(30.w),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(24.r),
+        border: Border.all(color: Colors.white.withOpacity(0.05)),
+      ),
+      child: Column(
+        children: [
+          Icon(Icons.workspace_premium_rounded, color: Colors.white12, size: 50.sp),
+          SizedBox(height: 10.h),
+          Text("No certificates yet", style: TextStyle(color: Colors.white30, fontSize: 14.sp, fontWeight: FontWeight.bold)),
+        ],
+      ),
+    );
+  }
 
-  Widget _inputField(TextEditingController c, String hint) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 16),
-    decoration: BoxDecoration(
-        color: const Color(0xFF2A2A3D),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white24)),
-    child: TextField(
-      controller: c,
-      style: const TextStyle(color: Colors.white),
-      decoration: InputDecoration(hintText: hint, hintStyle: const TextStyle(color: Colors.white54), border: InputBorder.none),
-    ),
-  );
+  Widget _certificateItem(String title) {
+    return Container(
+      width: 150.w,
+      margin: EdgeInsets.only(right: 15.w),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(22.r),
+        border: Border.all(color: Colors.white.withOpacity(0.05)),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: EdgeInsets.all(12.w),
+            decoration: BoxDecoration(color: Colors.amber.withOpacity(0.1), shape: BoxShape.circle),
+            child: Icon(Icons.workspace_premium_rounded, color: Colors.amber, size: 28.sp),
+          ),
+          SizedBox(height: 10.h),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 10.w),
+            child: Text(title, 
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(color: Colors.white70, fontSize: 12.sp, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _certificateImageItem(File file) {
+    return Container(
+      width: 150.w,
+      margin: EdgeInsets.only(right: 15.w),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(22.r),
+        border: Border.all(color: Colors.white.withOpacity(0.05)),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(22.r),
+        child: Image.file(file, fit: BoxFit.cover),
+      ),
+    );
+  }
 }

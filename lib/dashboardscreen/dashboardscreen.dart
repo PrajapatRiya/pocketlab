@@ -1,6 +1,7 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:pocketlab/HelpScreen/HelpSupportScreen.dart';
 import 'package:pocketlab/NotificationScreen/Noticationscreen.dart';
 
 class DashboardBlueScreen extends StatefulWidget {
@@ -48,242 +49,60 @@ class _DashboardBlueScreenState extends State<DashboardBlueScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
-    final screenWidth = MediaQuery.of(context).size.width;
-
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: Colors.black,
-      body: SafeArea(
-        child: _buildDashboard(screenHeight, screenWidth),
-      ),
-    );
-  }
-
-  Widget _buildDashboard(double screenHeight, double screenWidth) {
-    return SingleChildScrollView(
-      padding: EdgeInsets.all(screenWidth * 0.05),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      backgroundColor: theme.scaffoldBackgroundColor,
+      body: Stack(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
+          // Background Decorative Bubbles (Professional Glow)
+          Positioned(
+            top: -50.h,
+            right: -50.w,
+            child: _buildBlurCircle(theme.colorScheme.primary.withOpacity(0.12), 280),
+          ),
+          Positioned(
+            top: 200.h,
+            left: -100.w,
+            child: _buildBlurCircle(theme.colorScheme.secondary.withOpacity(0.08), 240),
+          ),
+          Positioned(
+            bottom: -50.h,
+            right: -80.w,
+            child: _buildBlurCircle(theme.colorScheme.primary.withOpacity(0.1), 220),
+          ),
+
+          SafeArea(
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              padding: EdgeInsets.fromLTRB(20.w, 10.h, 20.w, 100.h),
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    "Welcome back,",
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: screenWidth * 0.04,
-                    ),
-                  ),
-                  Text(
-                    isLoggedIn ? "Sophia!" : "Guest!",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: screenWidth * 0.06,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  _buildHeader(context),
+                  SizedBox(height: 30.h),
+                  _buildSearchBar(),
+                  SizedBox(height: 35.h),
+                  _buildSectionHeader("Featured Mastery"),
+                  SizedBox(height: 20.h),
+                  _buildFeaturedList(),
+                  SizedBox(height: 40.h),
+                  _buildSectionHeader("Top Categories"),
+                  SizedBox(height: 20.h),
+                  _buildCategoryGrid(),
+                  SizedBox(height: 40.h),
+                  _buildSectionHeader("Recommended for You"),
+                  SizedBox(height: 20.h),
+                  _buildCarousel(),
+                  SizedBox(height: 40.h),
+                  _buildSectionHeader("Trending Now"),
+                  SizedBox(height: 20.h),
+                  _buildTrendingCard("Digital Marketing", "by John Doe", "assets/images/content-strategy.png"),
+                  _buildTrendingCard("Project Management", "by Sarah Lee", "assets/images/project.png"),
+                  _buildTrendingCard("UI/UX Design Masterclass", "by Alex Kim", "assets/images/ui.png"),
+                  SizedBox(height: 35.h),
+                  _buildContinueLearningSection(),
                 ],
               ),
-              Row(
-                children: [
-                  InkWell(
-                    onTap: (){
-                      Navigator.push(context, MaterialPageRoute(builder: (context)=>NotificationScreen()));
-                    },
-                    child: CircleAvatar(
-                      radius: screenWidth * 0.055,
-                      backgroundColor: Colors.white.withOpacity(0.1),
-                      child: const Icon(Icons.notifications, color: Colors.white),
-                    ),
-                  ),
-                  SizedBox(width: screenWidth * 0.03),
-                  CircleAvatar(
-                    radius: screenWidth * 0.06,
-                    backgroundColor: Colors.purple,
-                    child: IconButton(
-                      icon: Icon(
-                        isLoggedIn ? Icons.person : Icons.logout,
-                        color: Colors.white,
-                      ),
-                      onPressed: () {},
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-
-          SizedBox(height: screenHeight * 0.03),
-
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.04),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.08),
-              borderRadius: BorderRadius.circular(screenWidth * 0.05),
-            ),
-            child: const TextField(
-              decoration: InputDecoration(
-                hintText: "Search for courses...",
-                hintStyle: TextStyle(color: Colors.white54),
-                border: InputBorder.none,
-                icon: Icon(Icons.search, color: Colors.white54),
-              ),
-              style: TextStyle(color: Colors.white),
-            ),
-          ),
-
-          SizedBox(height: screenHeight * 0.03),
-
-          _buildSectionHeader("Featured Courses", screenWidth),
-          SizedBox(height: screenHeight * 0.015),
-          SizedBox(
-            height: screenHeight * 0.25,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: 2,
-              itemBuilder: (context, index) {
-                return _buildFeaturedCard(
-                  index == 0 ? "Mastering Data Science" : "Advanced Web Dev",
-                  index == 0 ? "Data Science" : "Web Development",
-                  index == 0 ? Colors.purple : const Color(0xFFE45A92),
-                  screenWidth,
-                  screenHeight,
-                );
-              },
-            ),
-          ),
-
-          SizedBox(height: screenHeight * 0.03),
-
-          _buildSectionHeader("Categories", screenWidth),
-          SizedBox(height: screenHeight * 0.015),
-          GridView.count(
-            shrinkWrap: true,
-            crossAxisCount: 2,
-            crossAxisSpacing: screenWidth * 0.04,
-            mainAxisSpacing: screenHeight * 0.02,
-            childAspectRatio: 2.2,
-            physics: const NeverScrollableScrollPhysics(),
-            children: [
-              _buildCategoryCard(Icons.design_services, "Design", Colors.purple),
-              _buildCategoryCard(Icons.code, "Coding", Colors.orange),
-              _buildCategoryCard(Icons.campaign, "Marketing", Colors.green),
-              _buildCategoryCard(Icons.business, "Business", Colors.blue),
-            ],
-          ),
-
-          SizedBox(height: screenHeight * 0.03),
-
-          _buildSectionHeader("Recommended Courses", screenWidth),
-          SizedBox(height: screenHeight * 0.015),
-          CarouselSlider(
-            options: CarouselOptions(
-              height: screenHeight * 0.22,
-              enlargeCenterPage: true,
-              autoPlay: true,
-              viewportFraction: 0.75,
-              autoPlayCurve: Curves.easeInOut,
-              autoPlayInterval: const Duration(seconds: 4),
-            ),
-            items: _recommendedCourses.map((course) {
-              return Builder(
-                builder: (BuildContext context) {
-                  return ClipRRect(
-                    borderRadius: BorderRadius.circular(18),
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        Image.asset(
-                          course['image'] ?? 'assets/images/flutter1.jpg',
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) =>
-                          const Icon(Icons.error),
-                        ),
-                        Container(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.bottomCenter,
-                              end: Alignment.topCenter,
-                              colors: [
-                                Colors.black.withOpacity(0.6),
-                                Colors.transparent,
-                              ],
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          bottom: 16,
-                          left: 15,
-                          right: 15,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                course['title'] ?? 'Unknown Course',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: screenWidth * 0.045,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              Text(
-                                course['subtitle'] ?? 'No description',
-                                style: TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: screenWidth * 0.035,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              );
-            }).toList(),
-          ),
-
-          SizedBox(height: screenHeight * 0.03),
-
-          _buildSectionHeader("Trending Courses", screenWidth),
-          SizedBox(height: screenHeight * 0.015),
-          _buildTrendingCard("Digital Marketing", "by John Doe",
-              "assets/images/content-strategy.png"),
-          _buildTrendingCard(
-              "Project Management", "by Sarah Lee", "assets/images/project.png"),
-          _buildTrendingCard(
-              "UI/UX Design", "by Alex Kim", "assets/images/ui.png"),
-
-          SizedBox(height: screenHeight * 0.04),
-
-          Container(
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            padding: EdgeInsets.symmetric(
-                horizontal: screenWidth * 0.05, vertical: screenHeight * 0.025),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Continue Learning",
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontSize: screenWidth * 0.05,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                SizedBox(height: screenHeight * 0.02),
-                ..._continueCourses.map((course) =>
-                    _buildContinueLearningCard(course, screenWidth, screenHeight)),
-              ],
             ),
           ),
         ],
@@ -291,63 +110,319 @@ class _DashboardBlueScreenState extends State<DashboardBlueScreen> {
     );
   }
 
-  Widget _buildContinueLearningCard(
-      Map<String, dynamic> course, double screenWidth, double screenHeight) {
+  Widget _buildBlurCircle(Color color, double size) {
     return Container(
-      margin: EdgeInsets.only(bottom: screenHeight * 0.015),
+      width: size,
+      height: size,
       decoration: BoxDecoration(
-        color: Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade300),
+        shape: BoxShape.circle,
+        color: color,
       ),
-      padding: EdgeInsets.all(screenWidth * 0.04),
+      child: Container(
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: color,
+              blurRadius: 100,
+              spreadRadius: 40,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text("Hi Sophia,",
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  letterSpacing: 1.2,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white.withOpacity(0.5),
+                )),
+            SizedBox(height: 6.h),
+            Text(
+              "Keep Learning!",
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                fontWeight: FontWeight.w900,
+                fontSize: 28.sp,
+                letterSpacing: -0.5,
+              ),
+            ),
+          ],
+        ),
+        _buildIconButton(
+          icon: Icons.notifications_none_rounded,
+          onTap: () => Navigator.push(context,
+              MaterialPageRoute(builder: (_) => const NotificationScreen())),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildIconButton({required IconData icon, required VoidCallback onTap}) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16.r),
+      child: Container(
+        padding: EdgeInsets.all(12.w),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(16.r),
+          border: Border.all(color: Colors.white.withOpacity(0.08)),
+        ),
+        child: Icon(icon, color: Colors.white, size: 24.sp),
+      ),
+    );
+  }
+
+  Widget _buildSearchBar() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(20.r),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: TextField(
+        style: TextStyle(color: Colors.white, fontSize: 16.sp),
+        decoration: InputDecoration(
+          hintText: "Search your passion...",
+          prefixIcon: Icon(Icons.search_rounded, size: 22.sp, color: Colors.white.withOpacity(0.3)),
+          suffixIcon: Icon(Icons.tune_rounded, color: Theme.of(context).colorScheme.primary, size: 22.sp),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(20.r),
+            borderSide: BorderSide(color: Colors.white.withOpacity(0.05)),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(20.r),
+            borderSide: BorderSide(color: Theme.of(context).colorScheme.primary.withOpacity(0.3)),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Text(title,
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              fontSize: 20.sp,
+              fontWeight: FontWeight.w900,
+              letterSpacing: -0.5,
+            )),
+        Text("View all",
+            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+              color: Theme.of(context).colorScheme.primary,
+              fontWeight: FontWeight.w800,
+            )),
+      ],
+    );
+  }
+
+  Widget _buildFeaturedList() {
+    return SizedBox(
+      height: 200.h,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        children: [
+          _buildFeaturedCard("Data Science & AI", "Advanced Level", Theme.of(context).colorScheme.primary),
+          _buildFeaturedCard("Full Stack Flutter", "Intermediate", Theme.of(context).colorScheme.secondary),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFeaturedCard(String title, String subtitle, Color color) {
+    return Container(
+      width: 280.w,
+      margin: EdgeInsets.only(right: 20.w),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(28.r),
+        gradient: LinearGradient(
+          colors: [color, color.withOpacity(0.8)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(28.r),
+        child: Stack(
+          children: [
+            Positioned(
+              right: -20,
+              top: -20,
+              child: Icon(Icons.rocket_launch_rounded, size: 120, color: Colors.white.withOpacity(0.1)),
+            ),
+            Padding(
+              padding: EdgeInsets.all(24.w),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                    child: Text(subtitle, style: TextStyle(color: Colors.white, fontSize: 11.sp, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+                  ),
+                  const Spacer(),
+                  Text(title,
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 22.sp, height: 1.1, letterSpacing: -0.5)),
+                  SizedBox(height: 15.h),
+                  Row(
+                    children: [
+                      Text("Start Now", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 14.sp)),
+                      SizedBox(width: 8.w),
+                      Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 18.sp),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCategoryGrid() {
+    return GridView.count(
+      shrinkWrap: true,
+      crossAxisCount: 2,
+      crossAxisSpacing: 15.w,
+      mainAxisSpacing: 15.h,
+      childAspectRatio: 2.2,
+      physics: const NeverScrollableScrollPhysics(),
+      children: [
+        _buildCategoryCard(Icons.palette_rounded, "Design", Colors.purpleAccent),
+        _buildCategoryCard(Icons.code_rounded, "Coding", Colors.blueAccent),
+        _buildCategoryCard(Icons.trending_up_rounded, "Business", Colors.orangeAccent),
+        _buildCategoryCard(Icons.psychology_rounded, "Soft Skills", Colors.greenAccent),
+      ],
+    );
+  }
+
+  Widget _buildCategoryCard(IconData icon, String title, Color color) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(22.r),
+        border: Border.all(color: Colors.white.withOpacity(0.04)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: EdgeInsets.all(10.w),
+            decoration: BoxDecoration(color: color.withOpacity(0.12), shape: BoxShape.circle),
+            child: Icon(icon, color: color, size: 20.sp),
+          ),
+          SizedBox(width: 12.w),
+          Text(title, style: TextStyle(color: Colors.white, fontSize: 15.sp, fontWeight: FontWeight.w800)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCarousel() {
+    return CarouselSlider(
+      options: CarouselOptions(
+        height: 200.h,
+        enlargeCenterPage: true,
+        autoPlay: true,
+        viewportFraction: 0.85,
+        autoPlayInterval: const Duration(seconds: 4),
+      ),
+      items: _recommendedCourses.map((course) {
+        return Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(26.r),
+            image: DecorationImage(image: AssetImage(course['image']!), fit: BoxFit.cover),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(26.r),
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                    begin: Alignment.bottomCenter,
+                    end: Alignment.topCenter,
+                    colors: [Colors.black.withOpacity(0.95), Colors.transparent]),
+              ),
+              padding: EdgeInsets.all(22.w),
+              alignment: Alignment.bottomLeft,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(course['title']!, style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18.sp, letterSpacing: -0.5)),
+                  SizedBox(height: 4.h),
+                  Text(course['subtitle']!, style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 13.sp, fontWeight: FontWeight.w600)),
+                ],
+              ),
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildTrendingCard(String title, String subtitle, String imagePath) {
+    return Container(
+      margin: EdgeInsets.only(bottom: 16.h),
+      padding: EdgeInsets.all(16.w),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(24.r),
+        border: Border.all(color: Colors.white.withOpacity(0.04)),
+      ),
       child: Row(
         children: [
           ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Image.asset(
-              course['image'] as String? ?? 'assets/images/flutter1.jpg',
-              width: 60,
-              height: 60,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) =>
-              const Icon(Icons.error),
-            ),
-          ),
-          SizedBox(width: screenWidth * 0.04),
+              borderRadius: BorderRadius.circular(16.r),
+              child: Image.asset(imagePath, width: 60.w, height: 60.w, fit: BoxFit.cover)),
+          SizedBox(width: 16.w),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  course['title'] ?? 'Unknown Course',
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: screenWidth * 0.04,
-                      color: Colors.black),
-                ),
-                SizedBox(height: screenHeight * 0.005),
-                Text(
-                  course['lesson'] ?? 'No lesson',
-                  style: TextStyle(
-                      fontSize: screenWidth * 0.035, color: Colors.black54),
-                ),
-                SizedBox(height: screenHeight * 0.015),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: LinearProgressIndicator(
-                    value: (course['progress'] as double?) ?? 0.0,
-                    minHeight: 6,
-                    color: Colors.blueAccent,
-                    backgroundColor: Colors.blueAccent.withOpacity(0.2),
-                  ),
-                ),
-                SizedBox(height: screenHeight * 0.008),
-                Text(
-                  "${((course['progress'] as double?) ?? 0.0) * 100.toInt()}% complete",
-                  style: TextStyle(
-                      fontSize: screenWidth * 0.03, color: Colors.black54),
-                ),
+                Text(title, style: TextStyle(color: Colors.white, fontSize: 16.sp, fontWeight: FontWeight.w800, letterSpacing: -0.3)),
+                SizedBox(height: 4.h),
+                Text(subtitle, style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 13.sp, fontWeight: FontWeight.w600)),
+              ],
+            ),
+          ),
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+            decoration: BoxDecoration(color: Colors.amber.withOpacity(0.12), borderRadius: BorderRadius.circular(10.r)),
+            child: Row(
+              children: [
+                Icon(Icons.star_rounded, color: Colors.amber, size: 16.sp),
+                SizedBox(width: 4.w),
+                Text("4.8", style: TextStyle(color: Colors.amber, fontSize: 12.sp, fontWeight: FontWeight.w900)),
               ],
             ),
           ),
@@ -356,125 +431,70 @@ class _DashboardBlueScreenState extends State<DashboardBlueScreen> {
     );
   }
 
-  Widget _buildSectionHeader(String title, double screenWidth) => Row(
-    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-    children: [
-      Text(
-        title,
-        style: TextStyle(
-            color: Colors.white,
-            fontSize: screenWidth * 0.05,
-            fontWeight: FontWeight.bold),
-      ),
-      Text(
-        "See All",
-        style: TextStyle(
-            color: Colors.purple,
-            fontSize: screenWidth * 0.04,
-            fontWeight: FontWeight.w500),
-      ),
-    ],
-  );
-
-  Widget _buildFeaturedCard(String title, String category, Color color,
-      double screenWidth, double screenHeight) {
+  Widget _buildContinueLearningSection() {
     return Container(
-      width: screenWidth * 0.6,
-      margin: EdgeInsets.only(right: screenWidth * 0.04),
-      padding: EdgeInsets.all(screenWidth * 0.05),
+      width: double.infinity,
       decoration: BoxDecoration(
-        color: color.withOpacity(0.2),
-        borderRadius: BorderRadius.circular(screenWidth * 0.05),
+        color: Theme.of(context).colorScheme.primary.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(30.r),
+        border: Border.all(color: Theme.of(context).colorScheme.primary.withOpacity(0.15)),
       ),
+      padding: EdgeInsets.all(26.w),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            category,
-            style: TextStyle(
-              color: Colors.white70,
-              fontSize: screenWidth * 0.035,
-            ),
-          ),
-          SizedBox(height: screenHeight * 0.01),
-          Text(
-            title,
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: screenWidth * 0.045,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const Spacer(),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: color,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-            ),
-            onPressed: () {},
-            child: const Text("Enroll Now"),
-          ),
+          Text("Continue Your Journey",
+              style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: -0.5)),
+          SizedBox(height: 25.h),
+          ..._continueCourses.map((course) => _buildContinueLearningCard(course)),
         ],
       ),
     );
   }
 
-  Widget _buildCategoryCard(IconData icon, String title, Color color) =>
-      Container(
-        decoration: BoxDecoration(
-          color: const Color(0xFF2A3870).withOpacity(0.4),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, color: color, size: 30),
-              const SizedBox(height: 8),
-              Text(
-                title,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
+  Widget _buildContinueLearningCard(Map<String, dynamic> course) {
+    return Container(
+      margin: EdgeInsets.only(bottom: 16.h),
+      padding: EdgeInsets.all(18.w),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(22.r),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 4))
+        ],
+      ),
+      child: Row(
+        children: [
+          ClipRRect(
+              borderRadius: BorderRadius.circular(14.r),
+              child: Image.asset(course['image'], width: 50.w, height: 50.w, fit: BoxFit.cover)),
+          SizedBox(width: 16.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(course['title'],
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15.sp, color: Colors.white, letterSpacing: -0.3)),
+                SizedBox(height: 4.h),
+                Text(course['lesson'], style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 12.sp, fontWeight: FontWeight.w600)),
+                SizedBox(height: 14.h),
+                LinearProgressIndicator(
+                  value: course['progress'],
+                  minHeight: 6.h,
+                  borderRadius: BorderRadius.circular(10.r),
+                  color: Theme.of(context).colorScheme.primary,
+                  backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                 ),
-              ),
-            ],
-          ),
-        ),
-      );
-
-  Widget _buildTrendingCard(String title, String subtitle, String imagePath) =>
-      Card(
-        color: Colors.white.withOpacity(0.08),
-        margin: const EdgeInsets.only(bottom: 10),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: ListTile(
-          leading: ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: Image.asset(
-              imagePath,
-              width: 40,
-              height: 40,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) =>
-              const Icon(Icons.error),
+              ],
             ),
           ),
-          title: Text(
-            title,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          subtitle: Text(
-            subtitle,
-            style: const TextStyle(color: Colors.white70),
-          ),
-          trailing: const Icon(Icons.star, color: Colors.amber),
-        ),
-      );
+          SizedBox(width: 15.w),
+          Text("${(course['progress'] * 100).toInt()}%",
+              style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.w900, fontSize: 14.sp)),
+        ],
+      ),
+    );
+  }
 }
